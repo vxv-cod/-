@@ -1,0 +1,4 @@
+Sub startApp()
+Dim MyAppID
+MyAppID = Shell("C:\Users\vvkhomutskiy\Desktop\vxv_tnnc_SQL_Pyton.EXE", 1)
+End Sub

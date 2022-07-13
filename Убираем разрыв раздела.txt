@@ -1,0 +1,31 @@
+Sub vxv_Nolmal_DelEndOfTableChars()
+
+'Óáèðàåì àáçàöû(enter)
+Debug.Print "Â äîêóìåíòå ðàçäåëîâ - ", ActiveDocument.Sections.Count
+With ActiveDocument.Range.Find
+    .Text = "^p"
+    .Execute Replace:=wdReplaceAll
+    .Text = "^b"
+    .Execute Replace:=wdReplaceAll
+'    Óáèðàåì ðàçðûâ ñòðàíèöû
+'    .Text = "^m"
+End With
+
+'Óáèðàåì ðàçðûâû ðçäåëà ìåæäóâ òàáëèöàìè
+Dim tbl As Table
+Dim itbl As Long
+Selection.GoTo What:=wdGoToLine, Which:=wdGoToFirst
+On Error Resume Next
+For itbl = ActiveDocument.Tables.Count To 1 Step -1
+    Set tbl = ActiveDocument.Tables(itbl)
+    tbl.Range.Select
+    Selection.Collapse Direction:=wdCollapseEnd
+    Selection.InsertBreak Type:=0
+    Selection.Delete Unit:=wdCharacter, Count:=1
+Next itbl
+On Error GoTo 0
+
+'Debug.Print "Â äîêóìåíòå ðàçäåëîâ End - ", ActiveDocument.Sections.Count
+MsgBox "Óäàëåíèå ðàçäåëîâ âûïîëíåíî, ïðèÿòíîé ðàáîòû..."
+
+End Sub

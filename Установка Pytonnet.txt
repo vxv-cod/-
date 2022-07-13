@@ -1,0 +1,12 @@
+1.  Устанавиливаем библиотеку "pycparser"
+pip install C:\Users\vvkhomutskiy\Documents\vxv\Distr\install_Pythonnet\pycparser-2.21-py2.py3-none-any.whl
+
+2.  Устанавливаем Pythonnet
+pip install C:\Users\vvkhomutskiy\Documents\vxv\Distr\install_Pythonnet\pythonnet-2.5.2-cp37-cp37m-win_amd64.whl
+
+3.  Провереям, если метод AddReference в библиотеке "clr"
+import clr
+dir(clr)
+
+3.  Если надо, то удаляем "clr"
+pip uninstall clr
