@@ -4,11 +4,14 @@ import win32com.client
 import threading
 from pythoncom import CoInitializeEx as pythoncomCoInitializeEx
 from PyQt5 import QtCore, QtWidgets
+from vxv_tnnc_SQL_Pyton import Sql
+import traceback
 
 from rich import print
 from rich import inspect
 # inspect(xxx, methods=True)
 # inspect(xxx, all =True)
+from prettytable import PrettyTable
 os.system('CLS')
 
 class Signals(QtCore.QObject):
@@ -18,14 +21,14 @@ class Signals(QtCore.QObject):
     sig.signal_err.emit(f"Ошибка работы, повторите попытку \n\n{traceback.format_exc()}")
     sig.signal_color.emit(ui.progressBar_1, 0)
     sig.signal_color.emit(ui.progressBar_1, 1)
-    sig.signal_bool.emit(True)
+    sig.signal_bool.emit(ui.pushButton, True)
     sig.signal_bool.emit(ui.pushButton, False)
     '''
-    signal_Probar = QtCore.pyqtSignal(list)
-    signal_label = QtCore.pyqtSignal(list)
-    signal_err = QtCore.pyqtSignal(str)
-    signal_bool = QtCore.pyqtSignal(list)
-    signal_color = QtCore.pyqtSignal(list)
+    signal_Probar = QtCore.pyqtSignal(QtWidgets.QWidget, int)
+    signal_label = QtCore.pyqtSignal(QtWidgets.QWidget, str)
+    signal_err = QtCore.pyqtSignal(QtWidgets.QWidget, str)
+    signal_bool = QtCore.pyqtSignal(QtWidgets.QWidget, bool)
+    signal_color = QtCore.pyqtSignal(QtWidgets.QWidget, int)
 
     def __init__(self, parent=None):
         QtCore.QThread.__init__(self, parent)
@@ -36,33 +39,27 @@ class Signals(QtCore.QObject):
         self.signal_color.connect(self.on_change_color,QtCore.Qt.QueuedConnection)
 
     '''Отправляем сигналы в элементы окна'''
-    def on_change_Probar(self, s):
+    def on_change_Probar(self, s1, s2):
         '''Значение процента в прогресбаре'''
-        s[0].setValue(s[1])
-    def on_change_label(self, s):
+        s1.setValue(s2)
+        print(s2)
+    def on_change_label(self, s1, s2):
         '''Отправляем текст в label'''
-        s[0].setText(s[1])
-    def on_change_err(self, s):
+        s1.setText(s2)
+    def on_change_err(self, s1, s2):
         '''Сообщение об ошибке'''
-        eval(f"QtWidgets.QMessageBox.information(Form, 'Excel не отвечает...', {s})")
-    def on_change_color(self, s):
+        QtWidgets.QMessageBox.information(s1, 'Excel не отвечает...', s2)
+    def on_change_color(self, s1, s2):
         '''Устанавливаем цвет прогресбара'''
-        if s[1] == 1:
+        if s2 == 1:
             color = "170, 170, 170"
         else:
             color = "100, 150, 150"
-        s[0].setStyleSheet("QProgressBar::chunk {background-color: rgb("f"{color}); margin: 2px;""}")
-    def on_change_bool(self, s):
-        s[0].setDisabled(s[1])
+        s1.setStyleSheet("QProgressBar::chunk {background-color: rgb("f"{color}); margin: 2px;""}")
+    def on_change_bool(self, s1, s2):
+        s1.setDisabled(s2)
 
 sig = Signals()
-
-
-def thread(my_func):
-    '''Обертка функции в потопк (декоратор)'''
-    def wrapper():
-        threading.Thread(target=my_func, daemon=True).start()
-    return wrapper
 
 import ctypes
 def Allobject():
@@ -88,6 +85,15 @@ def Allobject():
     countfail = sum(countExelList)
     return countfail
 
+def thread(my_func):
+    '''Обертка функции в потопк (декоратор)'''
+    def wrapper():
+        global thr
+        # threading.Thread(target=my_func, daemon=True).start()
+        thr = threading.Thread(target=my_func, daemon=True).start()
+    return wrapper
+
+
 def ExcelInstances():
     '''Поиск всех процессов EXCEL.EXE'''
     objWMIService = win32com.client.Dispatch("WbemScripting.SWbemLocator")
@@ -111,6 +117,7 @@ def decorExcel(my_func):
             sleep(2)
     return wrapper
 
+
 '''Пример как исмользовать декоратор decorExcel'''
 @decorExcel
 def myfunc():
@@ -118,59 +125,119 @@ def myfunc():
     print(f"WbName = {WbName}")
 
 
-def colorBar(s):
-    '''Устанавливаем цвет прогресбара color = [ui.progressBar_1, 1]'''
-    if s[1] == 1:
-        color = "170, 170, 170"
-    else:
-        color = "100, 150, 150"
-    s[0].setStyleSheet("QProgressBar::chunk {background-color: rgb("f"{color}); margin: 2px;""}")
+
+'''-------------------------------------------------------------------------------------------------------------------------'''
+'''-------------------------------------------------------------------------------------------------------------------------'''
 
 def Book(fail=None, sheetName=None, ExcelVisible=1):
     '''Подключаемся к Excel'''
     pythoncomCoInitializeEx(0)
-    Excel = win32com.client.Dispatch("Excel.Application")
+    try:
+        Excel = win32com.client.GetActiveObject('Excel.Application')
+    except:
+        Excel = win32com.client.Dispatch("Excel.Application")
     Excel.Visible = ExcelVisible
-    if fail == None:
-        '''Получаем доступ к активной книге'''
-        wb = Excel.ActiveWorkbook
+    
+    CountBook = Excel.Workbooks.Count
+    # print(f"CountBook = {CountBook}")
+    if CountBook == 0:
+        print("Нет открытых файлов Excel")
+        wb, sheet, Namebook = '', '', ''
     else:
-        '''Получаем доступ к определенному файлу'''
-        wb = Excel.Workbooks.Open(rf"{fail}")
-
-    if sheetName == None:
-        """Получаем доступ к активному листу"""
-        sheet = wb.ActiveSheet
-    else:
-        """Получаем доступ к определенному листу"""
-        sheet = wb.Worksheets(sheetName)
+        if fail == None:
+            '''Получаем доступ к активной книге'''
+            wb = Excel.ActiveWorkbook
+        else:
+            '''Получаем доступ к определенному файлу'''
+            wb = Excel.Workbooks.Open(fail)
+        if sheetName == None:
+            """Получаем доступ к активному листу"""
+            sheet = wb.ActiveSheet
+        else:
+            """Получаем доступ к определенному листу"""
+            sheet = wb.Worksheets(sheetName)
+            sheet.Activate()
+        Namebook = wb.Name
     return wb, sheet
 
-def StartEndCell(sheet):
+
+def printTabconsole(dataAll:list = [[1,2,3], [4,5,6]], TitleTab = '', align = "c", column = 0, add_column = False):
+    '''Печатаем список из списков в таблице в консоле
+    printTabconsole(dataAll = aaa, TitleTab = 'bbb', align = 'lrc', column = ccc)
+    '''
+    mytable = PrettyTable()
+
+    if add_column == False:
+        if TitleTab == '':
+            TitleTab = ["-- " + str(i) + " --" for i in range(1, len(dataAll[0]) + 1)]
+        else:
+            TitleTab = ["-- " + str(i) + " --" for i in TitleTab]
+        mytable.field_names = TitleTab
+        mytable.add_rows(dataAll)
+
+    if add_column == True:
+        TitleTab = ["-- " + str(i) + " --" for i in range(1, len(dataAll) + 1)]
+        for i in range(len(dataAll)):
+            mytable.add_column(TitleTab[i], dataAll[i])
+
+    if column != 0:
+        mytable.align[TitleTab[column - 1]] = align
+    else:
+        mytable.align = align
+
+    return print(mytable)
+
+
+def ifErr(formula):
+    '''Убираем ошибку при пустом значении'''
+    iferror = f"IFERROR({formula},\"\")"
+    text = f"=IF({iferror}=0,\"\",{iferror})"
+    # print(text)
+    return text
+
+'''Формулы (при вставке значений по вертикали использовать кортежи с пустым 2ым значением)
+пример: ("=формула", )"'''
+# formula1 = ifErr("RC[-2]-RC[-1]")
+
+def EndIndexRowCol(sheet):
+    # EndRow, EndCol = EndIndexRowCol(sheet)
     '''Определяем позиции первой и последней ячейки'''
+    UsedRange = sheet.UsedRange
     # '''Количество занимаемых таблицей строк'''
-    count_row = sheet.UsedRange.Rows.Count
+    count_row = UsedRange.Rows.Count
     # '''Количество занимаемых таблицей колонок'''
-    count_col = sheet.UsedRange.Columns.Count
+    count_col = UsedRange.Columns.Count
     # '''Номер первой занимаемой строчки'''
-    StartRow = sheet.UsedRange.Row
+    StartRow = UsedRange.Row
     # '''Номер первой занимаемой колонки'''
-    StartCol = sheet.UsedRange.Column
+    StartCol = UsedRange.Column
     # '''Номер последней занимаемой строчки'''
     EndRow = StartRow + count_row - 1
     # '''Номер последней занимаемой колонки'''
     EndCol = StartCol + count_col - 1
     return EndRow, EndCol
 
+
+
+def NameEndCell(sheet):
+    # NameEndColumn, NameEndRow = NameEndCell(sheet)
+    '''Адресс последней ячейки'''
+    UsedRange = sheet.UsedRange
+    Address = UsedRange.Address.split(":")[1]
+    NameEndColumn = Address[1 : Address.rfind("$")]
+    NameEndRow = Address[Address.rfind("$") + 1 :]
+    # NameEndCell = NameEndColumn + NameEndRow
+    return NameEndColumn, NameEndRow
+
 def RangeCells(sheet, StartRow, StartCol, EndRow, EndCol):
     '''Выделяем диапозон ячеек'''
-    cell = sheet.Range(sheet.Cells(StartRow, StartCol), sheet.Cells(EndRow, EndCol))
-    return cell
+    cel = sheet.Range(sheet.Cells(StartRow, StartCol), sheet.Cells(EndRow, EndCol))
+    return cel
 
 def importdata(sheet, StartRow, StartCol, EndRow, EndCol):
     '''Собираем данные из диапозона ячеек'''
-    cell = sheet.Range(sheet.Cells(StartRow, StartCol), sheet.Cells(EndRow, EndCol))
-    vals = cell.Formula
+    cel = sheet.Range(sheet.Cells(StartRow, StartCol), sheet.Cells(EndRow, EndCol))
+    vals = cel.Formula
     if StartCol == EndCol:
         vals = [vals[i][x] for i in range(len(vals)) for x in range(len(vals[i]))]
     return vals
@@ -222,23 +289,39 @@ def exportPDF(widgetText, objWorkbook):
 
 
 
-
-
+def infoCellMy(cel):
+    dirCell = dir(cel)
+    for i in dirCell:
+        try:
+            xxx = f"cel.{i}()"
+            sss = eval(xxx)
+            print(f"{xxx} = {sss}")
+        except:
+            try:
+                xxx = f"cel.{i}"
+                sss = eval(xxx)
+                print(f"{xxx} = {sss}")
+                pass
+            except:
+                # print(f'///cel.{i} {type((i))} - не обработано................')
+                pass
 
 
 '''================================================================================================'''
 '''================================================================================================'''
-# inspect(cel.Font.Color, all=True)
-# widgetText = ui.plainTextEdit.toPlainText()
-# WbName = objWorkbook.Name
+
 # wb, sheet = Book()
+# NameEndColumn = NameEndCell(sheet)[0]
+# celX = f"=ПКЗМ!{NameEndColumn}8"
+# print(celX)
+# cel = sheet.Range("D30")
+# cel.Formula = f"=ПКЗМ!G8"
+# cel.Formula = "=ПКЗМ!R[-22]C[3]"
 
-# EndRow, EndCol = StartEndCell(sheet)
-# StartRow, StartCol = 1, 1
 
-# cel = RangeCells(sheet, StartRow, StartCol, EndRow, EndCol)
-# cel = sheet.Range("A5")
-# cel = sheet.Rows(f"{StartRow}:{EndRow}")
+
+# inspect(sheet.Columns)
+
 
 '''Зачеркиваем текст в ячейке'''
 # cel.Font.Strikethrough = True
@@ -249,21 +332,30 @@ def exportPDF(widgetText, objWorkbook):
 '''Сохранить как'''
 # objWorkbook.SaveAs(f"{strPath}\\{objWorkbook.Name}{strFileExtension}", FileFormat=objWorkbook.FileFormat, CreateBackup=0)
 
-'''Выбрать строчки'''
+'''Выбрать несколько строчки'''
 # RowsSelect = sheet.Rows(f"{StartRow}:{EndRow}")
-'''Выбрать колонки'''
-# ColSelect = sheet.Columns(f"{StartCol}:{EndCol}")
+# sheet.Range(sheet.Rows(7), sheet.Rows(18)).Select()
+# cel = Excel.Selection.Interior
+# cel.Color = 65535
+# cel.Pattern = 1
+'''Выбор несколько колонок'''
+# ColSelect = sheet.Columns("A:D")
+# sheet.Range(sheet.Columns(2), sheet.Columns(5)).Activate()
+# sheet.Range(sheet.Columns(2), sheet.Columns(5)).Select()
+
 
 '''Объединение ячеек'''
 # cel.Merge()
 # cel.MergeCells = True
+# cel.UnMerge
 
 '''Перенести текст'''
 # cel.WrapText = True
 
-'''Задание ширины ячейки'''
+'''Задание ширины ячейки (колонки)'''
 # cel.ColumnWidth = 45
-'''Задание высоты ячейки'''
+'''Задание высоты ячейки (строки)'''
+# cel.RowHeight = 45
 
 '''Выравниваем текст в ячейке'''
 '''Выравниваем по горизонтали (вертикали) центр'''
@@ -272,11 +364,19 @@ def exportPDF(widgetText, objWorkbook):
 '''Выравниваем по горизонтали влево'''
 # cel.HorizontalAlignment = 1
 
-'''Удаляем строки со сдвигом вверх'''
-# sheet.Rows(f"{StartRow}:{EndRow}").Delete(1)
+'''Удаляем строки '''
+# sheet.Rows(11).Delete()
+# sheet.Rows("11").Delete()
+# sheet.Rows("11:12").Delete()
+# sheet.Rows(f"{StartRow}:{EndRow}").Delete()
+'''Удалить строчку по ячейке'''
+# sheet.Cells(1, 1).EntireRow.Delete()
 
 '''Удаляем колонки'''
-# sheet.Columns("AV:AW").Delete(1)
+# sheet.Columns(7).Delete()
+# sheet.Columns("AV").Delete()
+# sheet.Columns("AV:AW").Delete()
+# sheet.Range(sheet.Columns(2), sheet.Columns(5)).Delete()
 
 '''Очистить содержимое строчек'''
 # sheet.Rows(f"{StartRow}:{EndRow}").ClearContents()
@@ -291,8 +391,11 @@ def exportPDF(widgetText, objWorkbook):
 # cel.Activate()
 # sheet.Paste()
 
+'''Подчеркнутый текст в ячейке'''
+# cel.Font.Underline = 2
+
 """Отключение уведомлений с ответом по умолчанию для сохранения без подтверждения"""
-# Excel.DisplayAlerts = False  
+# Excel.DisplayAlerts = False
 
 '''Закрыть файл без сохранения'''
 # wb.Close(False)
@@ -301,6 +404,45 @@ def exportPDF(widgetText, objWorkbook):
 '''Закрыть экземпляр Excel'''
 # Excel.Quit()
 
+'''
+Сору    	                    Копирует объект Shape в буфер обмена
+Cut	                            Копирует объект Shape в буфер обмена с удалением
+Delete	                        Удаляет объект Shape
+    img.Delete()
+Paste	                        Вставляет объект Shape из буфера обмена
+IncrementLeft, IncrementTop	    Сдвигает объект Shape по горизонтали и вертикали соответственно на заданное в аргументе количество пунктов. Синтаксис:
+  IncrementLeft (Increment) 
+  IncrementTop (Increment)
+IncrementRotation	            Поворачивает объект Shape на заданный в аргументе угол. Синтаксис:
+  IncrementRotation (Increment)
+  '''
+  
+'''Сдвигает объект Shape по горизонтали и вертикали соответственно на заданное в аргументе количество пунктов'''
+# img.IncrementLeft(100)
+# img.IncrementTop(100)
+'''
+Left, Top — координаты левого верхнего угла объекта;
+Width, Height — ширина и высота объекта.
+'''
+'''Привязываемся к координатам ячейки'''
+# cell = sheet.Cells(5, 3)
+# img.Left = cell.Left                                                                                                                                                               
+# img.Top = cell.Top
+
+
+
+'''True, False = 1, 0'''
+
+'''Масштаб'''
+# img.ScaleHeight(2, 1, 0)
+
+# bbb = img.ScaleWidth(1, 1, 0)
+'''Сохранить пропорции рисунка'''
+# img.LockAspectRatio = True
+'''НЕ охранять пропорции рисунка'''
+# img.LockAspectRatio = False
+# img.Height = 50
+# img.Width = 100
 
 # dirCell = dir(cel)
 # for i in dirCell:
@@ -318,3 +460,13 @@ def exportPDF(widgetText, objWorkbook):
 #             # print(f'///cel.{i} {type((i))} - не обработано................')
 #             pass
 
+# '''Удаляем колонки'''
+# sleep(2)
+# NameEndColumn, NameEndRow = NameEndCell(sheet)
+# col = sheet.Columns(f"D:{NameEndColumn}")
+# col.Delete()
+# # print(EndCol)
+# # for i in range(4, EndCol + 1):
+# #     sheet.Columns(4).Delete()
+# '''Удаляем строки со сдвигом вверх'''
+# sheet.Rows(f"11:{NameEndRow}").Delete(1)
