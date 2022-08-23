@@ -4,15 +4,15 @@ import win32com.client
 import threading
 from pythoncom import CoInitializeEx as pythoncomCoInitializeEx
 from PyQt5 import QtCore, QtWidgets
-from vxv_tnnc_SQL_Pyton import Sql
-import traceback
+# from vxv_tnnc_SQL_Pyton import Sql
+# import traceback
 
-from rich import print
-from rich import inspect
+# from rich import print
+# from rich import inspect
 # inspect(xxx, methods=True)
 # inspect(xxx, all =True)
 from prettytable import PrettyTable
-os.system('CLS')
+# os.system('CLS')
 
 class Signals(QtCore.QObject):
     '''
@@ -42,13 +42,12 @@ class Signals(QtCore.QObject):
     def on_change_Probar(self, s1, s2):
         '''Значение процента в прогресбаре'''
         s1.setValue(s2)
-        print(s2)
     def on_change_label(self, s1, s2):
         '''Отправляем текст в label'''
         s1.setText(s2)
     def on_change_err(self, s1, s2):
         '''Сообщение об ошибке'''
-        QtWidgets.QMessageBox.information(s1, 'Excel не отвечает...', s2)
+        QtWidgets.QMessageBox.information(s1, 'Сбой программы...', s2)
     def on_change_color(self, s1, s2):
         '''Устанавливаем цвет прогресбара'''
         if s2 == 1:
@@ -136,6 +135,8 @@ def Book(fail=None, sheetName=None, ExcelVisible=1):
         Excel = win32com.client.GetActiveObject('Excel.Application')
     except:
         Excel = win32com.client.Dispatch("Excel.Application")
+        '''Статическое подключение (работатет при копировании леистов из файла в файл)'''
+        # Excel = win32com.client.gencache.EnsureDispatch('Excel.Application')
     Excel.Visible = ExcelVisible
     
     CountBook = Excel.Workbooks.Count
@@ -165,6 +166,7 @@ def printTabconsole(dataAll:list = [[1,2,3], [4,5,6]], TitleTab = '', align = "c
     '''Печатаем список из списков в таблице в консоле
     printTabconsole(dataAll = aaa, TitleTab = 'bbb', align = 'lrc', column = ccc)
     '''
+    from prettytable import PrettyTable
     mytable = PrettyTable()
 
     if add_column == False:
@@ -246,7 +248,6 @@ def exportdata(data, sheet, StartRow, StartCol, EndRow, EndCol):
     '''Отправляем данные в диапозон ячеек'''
     if StartCol == EndCol:
         data = [(i, None) for i in data]
-        print(f"data = {data}")
     sheet.Range(sheet.Cells(StartRow, StartCol), sheet.Cells(EndRow, EndCol)).Formula = data
 
 def grani(cel):
@@ -284,9 +285,19 @@ def exportPDF(widgetText, objWorkbook):
     OutputFile = f"{strPath}\\{pdfName}.pdf"
     objWorkbook.ExportAsFixedFormat(0, OutputFile)
 
+# fileName = "Автомобильные дороги.xltx"
+def redactExcel(fileName):
+    '''Редактировать шаблон Excel *.xltx '''
+    ZeroExcel = win32com.client.gencache.EnsureDispatch('Excel.Application')
+    ZeroExcel.Workbooks.Open(os.getcwd() + f"\{fileName}", Editable=True)
+    ZeroExcel.Visible = 1
 
-
-
+'''Округление'''
+def NFt(cells, okrug):
+    try:
+        cells.NumberFormat = okrug
+    except:
+        cells.NumberFormat = okrug.replace('.', ',')
 
 
 def infoCellMy(cel):
@@ -322,6 +333,12 @@ def infoCellMy(cel):
 
 # inspect(sheet.Columns)
 
+'''Сортировка таблицы'''
+# sheet.Sort.SortFields.Clear
+# sheet.Sort.SortFields.Add(Key=sheet.Range("E3"))
+# sor = sheet.Sort
+# sor.SetRange(sheet.Range(sheet.Cells(3, 1), sheet.Cells(EndRow, EndCol)))
+# sor.Apply()
 
 '''Зачеркиваем текст в ячейке'''
 # cel.Font.Strikethrough = True
@@ -336,7 +353,8 @@ def infoCellMy(cel):
 # RowsSelect = sheet.Rows(f"{StartRow}:{EndRow}")
 # sheet.Range(sheet.Rows(7), sheet.Rows(18)).Select()
 # cel = Excel.Selection.Interior
-# cel.Color = 65535
+# cel.Color = 65535     # желтый
+# cel.Color = 255       # красный
 # cel.Pattern = 1
 '''Выбор несколько колонок'''
 # ColSelect = sheet.Columns("A:D")
@@ -369,6 +387,8 @@ def infoCellMy(cel):
 # sheet.Rows("11").Delete()
 # sheet.Rows("11:12").Delete()
 # sheet.Rows(f"{StartRow}:{EndRow}").Delete()
+
+'''Выделение или работа со строчкой по ячейке в ней'''
 '''Удалить строчку по ячейке'''
 # sheet.Cells(1, 1).EntireRow.Delete()
 
@@ -381,6 +401,8 @@ def infoCellMy(cel):
 '''Очистить содержимое строчек'''
 # sheet.Rows(f"{StartRow}:{EndRow}").ClearContents()
 
+'''Копируем лист'''
+# sheet.Copy(After=wb.Worksheets[wb.Worksheets.Count])
 
 '''Копируем ячейки'''
 # cel = RangeCells(sheet, StartRow, StartCol, EndRow, EndCol)
