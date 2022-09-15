@@ -321,6 +321,14 @@ def infoCellMy(cel):
 '''================================================================================================'''
 '''================================================================================================'''
 
+
+'''Убираем текст из ячеек (Поз.спец.XXX)'''
+print("-------------------------------------")
+# Items = sheet.Range(sheet.Cells(StartRow, 9), sheet.Cells(EndRow, 9))
+# Items.Replace( What="Поз.спец.* ", Replacement="")
+'''дополнительно текст должен быть зачеркнут'''
+# Items.Replace( What="* ", Replacement="Dele", SearchFormat=True)
+
 # wb, sheet = Book()
 # NameEndColumn = NameEndCell(sheet)[0]
 # celX = f"=ПКЗМ!{NameEndColumn}8"
