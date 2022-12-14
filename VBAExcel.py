@@ -151,6 +151,7 @@ def Book(fail=None, sheetName=None, ExcelVisible=1):
         else:
             '''Получаем доступ к определенному файлу'''
             wb = Excel.Workbooks.Open(fail)
+            # wb = Excel.Workbooks.Add()
         if sheetName == None:
             """Получаем доступ к активному листу"""
             sheet = wb.ActiveSheet
@@ -369,6 +370,13 @@ print("-------------------------------------")
 # sheet.Range(sheet.Columns(2), sheet.Columns(5)).Activate()
 # sheet.Range(sheet.Columns(2), sheet.Columns(5)).Select()
 
+'''Выравниваем колонки по содержимому'''
+# ColSelect = sheet.Columns("A:D")
+# ColSelect.EntireColumn.AutoFit()
+
+'''Выравниваем строчек по высоте по содержимому'''
+# tabEx = RangeCells(sheet, StartRow, StartCol, EndRow, EndCol)
+# tabEx.EntireRow.AutoFit()
 
 '''Объединение ячеек'''
 # cel.Merge()
@@ -424,6 +432,9 @@ print("-------------------------------------")
 '''Подчеркнутый текст в ячейке'''
 # cel.Font.Underline = 2
 
+'''Жирный текст в ячейке'''
+# cel.Font.Bold = True
+
 """Отключение уведомлений с ответом по умолчанию для сохранения без подтверждения"""
 # Excel.DisplayAlerts = False
 
@@ -433,6 +444,46 @@ print("-------------------------------------")
 # wb.Close()
 '''Закрыть экземпляр Excel'''
 # Excel.Quit()
+
+'''Создание таблицы со стилем'''
+# cels = sheet.Range(sheet.Cells(1, 1), sheet.Cells(EndRow, EndCol))
+# cels.Select
+# sheet.ListObjects.Add(1, cels, True, 1)
+
+'''Добавление листа'''
+# sheet5 = wb.Sheets.Add().Name = "xxxxx"
+
+'''Получаем адресс диапозона источника сводной таблицы'''
+# print(PivotTab.SourceData)
+
+'''Количество занимаемых таблицей строк'''
+# PivotTab = sheet.PivotTables(1)
+# NameTab = PivotTab.Name
+# count_row = wb.Worksheets("CPU_data").UsedRange.Rows.Count
+# PivotTab.ChangePivotCache(wb.PivotCaches().Create(1, f"CPU (2)!R1C1:R{count_row}C10", 5))
+
+'''Ширина всех колонок'''
+# sheet.Cells.ColumnWidth = 11
+
+'''Ширина диаграммы'''
+# sheet.Shapes("Диаграмма 2").Width = 1200
+# sheet.Shapes("Диаграмма 1").Width = 1200
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 '''
 Сору    	                    Копирует объект Shape в буфер обмена
