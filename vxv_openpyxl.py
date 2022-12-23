@@ -38,6 +38,11 @@ print(wb.sheetnames)
 # Удалить лист
 wb.remove(sheet)
 
+# Максимальное количество заполненных строк
+max_row = ws.max_row
+# Максимальное количество заполненных строк
+max_column = ws.max_column
+
 # Получить значение ячейки
 cell = sheet['A1']
 val = cell.value
@@ -64,8 +69,6 @@ cell = sheet.cell(row=1, column=1, value='zszxz')
 cell = sheet.cell(4, 1, 'dd')
 # Написать формулу
 sheet['A3'] = '=SUM(1, 1)'
-
-
 
 
 # Получите одну ячейку:
@@ -387,7 +390,10 @@ megre_cell.alignment = Alignment(horizontal="center", vertical="center")
 '''Оформление границ ячеек.'''
 '''Цвет и стиль границ/бордюров ячеек выставляется атрибутом ячейки .border и 
 классом Border() совместно с классом Side().'''
-'''При этом аргумент стиля границ ячеек border_style может принимать ОДИН из следующих значений: ‘dashDotDot’, ‘medium’, ‘dotted’, ‘slantDashDot’, ‘thin’, ‘hair’, ‘mediumDashDotDot’, ‘dashDot’, ‘double’, ‘mediumDashed’, ‘dashed’, ‘mediumDashDot’ и ‘thick’.
+'''При этом аргумент стиля границ ячеек border_style может принимать ОДИН из следующих значений: 
+'dashDotDot', 'medium', 'dotted', 'slantDashDot', 'thin', 'hair', 'mediumDashDotDot', 'dashDot', 'double', 'mediumDashed', 'dashed', 'mediumDashDot' и 'thick'.
+"Пунктирная точка", "средняя", "пунктирная точка", "наклонная точка", "тонкая", "волосы", "средняя точка", "пунктирная точка", "двойная", "средняя точка", "пунктирная точка", "средняя точка" и "толстая".
+
 Пример стилизации границ одной ячейки:'''
 from openpyxl import Workbook
 from openpyxl.styles import Border, Side
@@ -409,7 +415,7 @@ cell.border = Border(top=thins, bottom=thins, left=thins, right=thins)
 
 '''Обязательный аргумент fill_type (по умолчанию равен None) класса PatternFill() может принимать значения:
 если fill_type='solid', то нужно обязательно указывать аргумент цвета заливки fgColor.
-следующие значения аргумента fill_type применяются самостоятельно (без аргумента fgColor) и представляют собой предустановленные цвета заливки : ‘darkHorizontal’, ‘lightDown’, ‘lightGray’, ‘darkDown’, ‘darkGrid’, ‘darkUp’, ‘darkGray’, ‘darkVertical’, ‘darkTrellis’, ‘mediumGray’, ‘lightVertical’, ‘lightTrellis’, ‘lightGrid’, ‘lightHorizontal’, ‘gray0625’, ‘lightUp’, ‘gray125’.
+следующие значения аргумента fill_type применяются самостоятельно (без аргумента fgColor) и представляют собой предустановленные цвета заливки : 'darkHorizontal', 'lightDown', 'lightGray', 'darkDown', 'darkGrid', 'darkUp', 'darkGray', 'darkVertical', 'darkTrellis', 'mediumGray', 'lightVertical', 'lightTrellis', 'lightGrid', 'lightHorizontal', 'gray0625', 'lightUp', 'gray125'.
 Внимание: если аргумент fill_type не указан, то fgColor не будет иметь никакого эффекта!
 Пример заливки одной ячейки:'''
 from openpyxl import Workbook
@@ -549,6 +555,7 @@ print(wb.defined_names.get('privaterange', sheetid).attr_text)
 # код выведет
 # ['privaterange']
 # Sheet!$A$6
+
 '''Пример доступа к диапазону ячеек.
 Доступ к диапазону под названием my_range:'''
 # получаем диапазон ячеек из словаря `defined_names`
@@ -581,3 +588,22 @@ for title, coord in dests:
 
 '''Работа с объектом Table() модуля openpyxl в Python.
 https://docs-python.ru/packages/modul-openpyxl/obekt-worksheet-table/'''
+
+# --------------------------------------------------------------
+'''Равнозначные записи'''
+cells_range = ws['A3':f'A{max_row}']
+for cel in cells_range:
+    cel[0].border = bd
+
+
+for col in range(1, 3 + 1):
+    for row in range(3, max_row + 1):
+        cel = ws.cell(row, col)
+        cel.border = bd
+
+
+for col in ws.iter_cols(min_row=3, max_col=max_column, max_row=max_row):
+    for cell in col:
+        cell.border = bd
+# --------------------------------------------------------------
+
