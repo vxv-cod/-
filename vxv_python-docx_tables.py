@@ -28,6 +28,8 @@ cell.text = 'Бык'
 rc = cell.paragraphs[0].runs[0]
 rc.font.name = 'Arial'
 rc.font.bold = True
+from docx.shared import Pt, RGBColor
+rc.font.color.rgb = RGBColor(255, 0, 0)
 
 # Часто бывает проще получить доступ к ряду ячеек одновременно, например, 
 # при заполнении таблицы переменной длины из источника данных. 
@@ -317,4 +319,27 @@ Cell.width
 # Свойство Cell.width возвращает/устанавливает ширину этой ячейки в величине EMU или None, если ширина явно не задана.
 
 
+'''--------------------------------------------------------------'''
+'''Заливка фона ячейки'''
+from docx.oxml import OxmlElement
+from docx.oxml.ns import qn
+from docx import Document
+def set_cell_color(cell):
+    ''' Фон ячейки'''
+    clShading = OxmlElement('w:shd')
+    clShading.set(qn('w:fill'), "FFD200") # Hex of RGBColor(255, 210, 0)
+    cell._tc.get_or_add_tcPr().append(clShading)
+    return cell
 
+'''Красим вторую строчку'''
+for cell in table.rows[1].cells:
+    set_cell_color(cell)
+'''--------------------------------------------------------------'''
+
+def Delete_table(nomer_tabl):
+    '''Удалить таблицу'''
+    doc.tables[nomer_tabl]._element.getparent().remove(doc.tables[nomer_tabl]._element)
+
+Delete_table(1)
+
+'''--------------------------------------------------------------'''

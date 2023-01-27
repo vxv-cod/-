@@ -64,7 +64,7 @@ prior_p = p.insert_paragraph_before(
 # стилями или для кастомного/пользовательского форматирования.
 
 '''
-# Пользовательское форматирование абзаца.
+# {Пользовательское форматирование абзаца}.
 # Форматирование абзацев происходит при помощи объекта {ParagraphFormat}.
 # Пример и синтаксис объекта {ParagraphFormat}:
 # Пример использования объекта форматирования абзаца {ParagraphFormat} документа MS Word.
@@ -896,7 +896,10 @@ runs_txt = []
 for run in p.runs:
     runs_txt.append(run.text)
 print(''.join(runs_txt))
-
+'''------------------------------------------------'''
+'''Цвет текста параграфа'''
+paragraph.runs[0].font.color.rgb = RGBColor(255, 0, 0)
+'''------------------------------------------------'''
 
 '''
 {Paragraph.style}:
@@ -1375,3 +1378,62 @@ inspect(doc.core_properties)
 document_property = doc.core_properties
 print(dir(document_property))
 print([p for p in dir(document_property) if not p.startswith('_')])
+
+'''------------------------------------------------'''
+def delete_paragraph(paragraph):
+    '''Удаление параграффа и таблицы'''
+    p = paragraph._element
+    p.getparent().remove(p)
+    # paragraph._p = paragraph._element = None
+
+delete_paragraph(doc.paragraphs[-2])
+delete_paragraph(doc.tables[1])    
+'''------------------------------------------------'''
+
+'''------------------------------------------------'''
+'''Копируем элемент с глубокой степенью '''
+from copy import deepcopy
+paragraph._p.addnext(deepcopy(doc.tables[1]._element))
+paragraph._p.addnext(deepcopy(doc.paragraphs[15]._element))
+
+# или
+
+doc = Document('test.docx')
+doc_new = Document('test_none.docx')
+def copy_elem(paragraph, elem):
+    paragraph._p.addnext(deepcopy(elem._element))
+ListImport = [
+    doc.paragraphs[15],
+    table,
+    doc.paragraphs[14],
+    doc.paragraphs[13]    
+]
+paragraph = doc_new.paragraphs[-2]
+for i in ListImport: copy_elem(paragraph, i)
+'''------------------------------------------------'''
+'''Замена текста''' 
+for paragraph in doc.paragraphs:
+    paragraph.text = paragraph.text.replace("old", "new")
+'''------------------------------------------------'''
+'''Прочитать все параграфы'''
+for i, val in enumerate(doc.paragraphs): print(i, val.text)
+'''------------------------------------------------'''
+
+
+
+def testprog(doc, NameFaileDoc):
+    """Создаем COM объект Word для просмотра результата"""
+    import win32com.client, os
+    pattern_time = 'pattern_time.docx'
+
+    Word = win32com.client.Dispatch("Word.Application")
+    Word.Visible = 1
+    Word.DisplayAlerts = 0
+    for Docum in Word.Documents:
+        if Docum.Name == NameFaileDoc or Docum.Name == pattern_time:
+            Docum.Close()
+
+    doc.save(NameFaileDoc)
+    Word.Documents.Open(os.getcwd() + f"\\{NameFaileDoc}")
+
+# testprog(doc, NameFaileDoc)

@@ -2,16 +2,31 @@
 
 '''https:#club.directum.ru/post/778?ysclid=l6djdl35ao769763968'''
 
+import os
 import win32com.client
 import win32com.client.gencache
 from rich import print
 from rich import inspect
 
+fail = os.getcwd() + "\\Шаблон_печати_А4_альбом.dotx"
+
 # Word = CreateObject("Word.Application") 
 Word = win32com.client.Dispatch("Word.Application")
 Word = win32com.client.gencache.EnsureDispatch("Word.Application")
-Doc = Word.Documents.Open(Path)
+Doc = Word.Documents.Open(fail)
 Doc = Word.ActiveDocument
+
+'''Закрыть документ'''
+Doc.Close()
+NameFaileDoc = 'test_result.docx'
+for Docum in Word.Documents:
+    if Docum.Name == NameFaileDoc:
+        Docum.Close()
+Word.Documents.Open(os.getcwd() + f"\\{NameFaileDoc}")
+
+'''Создать по шаблону по шаблону'''
+Doc = Word.Documents.Add(fail)
+
 # Word.DisplayAlerts = -1     # Отображаются все поля сообщений и оповещения; ошибки возвращаются в макрос
 
 '''Добавить текст'''
@@ -474,9 +489,6 @@ Doc.SaveAs(FileName = "generated.docx")
 '''Если файл изменен, то сохранить его'''
 if Doc.Saved == False: Doc.Save()
 
-'''Создать по шаблону по шаблону'''
-fail = os.getcwd() + "\\Шаблон_печати_А4_альбом.dotx"
-Doc = Word.Documents.Add(fail)
 
 
 '''Выбор объектов'''
